@@ -1,0 +1,46 @@
+name: Deploy demo to Cloudflare Pages
+
+# demo/ 폴더가 바뀐 채로 main 에 push 되면 Cloudflare Pages 로 자동 배포한다.
+# 수동 실행: Actions 탭 → 이 워크플로 → Run workflow
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'demo/**'
+      - '.github/workflows/deploy-demo.yml'
+  workflow_dispatch:
+
+# 같은 브랜치에서 연속 push 시 이전 실행을 취소해 배포 순서가 뒤집히지 않게 한다.
+concurrency:
+  group: deploy-demo-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: cloudflare-pages
+      url: https://easyproject4-demo.pages.dev
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v7
+
+      - name: demo 폴더 확인
+        run: |
+          test -f demo/index.html || { echo "::error::demo/index.html 이 없습니다."; exit 1; }
+          echo "배포할 파일:"
+          find demo -type f | sort
+
+      - name: Cloudflare Pages 배포
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            pages deploy demo
+            --project-name easyproject4-demo
+            --branch main
