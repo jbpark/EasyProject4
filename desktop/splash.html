@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>EasyProject4</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: #0f1115;
+    color: #e6e9ef;
+    font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 24px;
+  }
+  .logo {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, #7dd3fc, #a78bfa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .spinner {
+    width: 34px; height: 34px;
+    border: 3px solid #2a2f3a;
+    border-top-color: #7dd3fc;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #status { font-size: 14px; color: #9aa3b2; min-height: 20px; }
+  #log {
+    width: min(860px, 92vw);
+    height: 40vh;
+    background: #14171e;
+    border: 1px solid #232836;
+    border-radius: 8px;
+    padding: 12px 14px;
+    overflow-y: auto;
+    font-family: Consolas, "D2Coding", monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #8fa1b8;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+</style>
+</head>
+<body>
+  <div class="logo">EasyProject4</div>
+  <div class="spinner"></div>
+  <div id="status">EP4 서버 시작 중…</div>
+  <div id="log"></div>
+  <script>
+    const logEl = document.getElementById("log");
+    const statusEl = document.getElementById("status");
+    if (window.ep4desktop) {
+      window.ep4desktop.onLog((line) => {
+        logEl.textContent += line + "\n";
+        logEl.scrollTop = logEl.scrollHeight;
+      });
+      window.ep4desktop.onStatus((text) => { statusEl.textContent = text; });
+      window.ep4desktop.requestBacklog();
+    }
+  </script>
+</body>
+</html>

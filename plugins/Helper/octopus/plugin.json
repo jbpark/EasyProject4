@@ -1,0 +1,13 @@
+{
+  "id": "octopus",
+  "type": "agent",
+  "name": "문어",
+  "names": { "ko": "문어", "en": "Octopus" },
+  "icon": "🐙",
+  "version": "1.0.0",
+  "description": "귀여운 문어 GIF 마스코트. 화면을 돌아다니며 응원해 줍니다.",
+  "descriptions": {
+    "ko": "귀여운 문어 GIF 마스코트. 화면을 돌아다니며 응원해 줍니다.",
+    "en": "Cute octopus GIF mascot. Roams around the screen cheering you on."
+  }
+}

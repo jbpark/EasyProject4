@@ -1,0 +1,4 @@
+{
+  "auth_token": "(최초 실행 시 자동 생성 — 직접 넣지 않아도 됩니다)",
+  "firebase_db_url": "https://<프로젝트>-default-rtdb.firebaseio.com"
+}

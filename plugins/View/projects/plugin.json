@@ -1,0 +1,19 @@
+{
+  "id": "projects",
+  "type": "view",
+  "name": "프로젝트",
+  "names": { "ko": "프로젝트", "en": "Projects", "zh": "项目", "fr": "Projets", "de": "Projekte", "es": "Proyectos" },
+  "icon": "🗂",
+  "version": "1.0.0",
+  "menu": { "section": "main", "order": 10 },
+  "route": "projects",
+  "description": "프로젝트를 생성·관리하고 태스크를 묶어 순차 실행합니다.",
+  "descriptions": {
+    "ko": "프로젝트를 생성·관리하고 태스크를 묶어 순차 실행합니다.",
+    "en": "Create and manage projects, group tasks for sequential execution."
+  },
+  "actions": [
+    { "id": "create_project", "label": "새 프로젝트 만들기", "deeplink": "/#/view/projects?action=new" },
+    { "id": "open_project", "label": "프로젝트 열기", "params": [{ "name": "id", "type": "int", "required": true }], "deeplink": "/#/view/projects?id={id}" }
+  ]
+}

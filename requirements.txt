@@ -1,0 +1,11 @@
+# EasyProject4 runtime dependencies
+# Session terminal: Windows PTY (keeps interactive Claude sessions alive)
+pywinpty>=2.0
+# Terminal emulation for session output (2D screen, cursor movement, ANSI colors)
+pyte>=0.8.2
+# Firebase Realtime DB (tunnel URL sharing)
+firebase-admin>=6.0
+# QR code generation (mobile connection, SVG — no PIL required)
+qrcode>=7.0
+# Plugin framework (backend hooks: manifest/agent/route/task-done hooks)
+pluggy>=1.5

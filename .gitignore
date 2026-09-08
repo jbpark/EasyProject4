@@ -1,0 +1,80 @@
+# Harness 격리 작업 저장소 (자체 git repo)
+harness/workspace/
+
+# Harness 산출물
+harness/output/
+
+# IDE
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+
+# 런타임 데이터
+harness/chat.db
+todo_list.md
+
+# 테스트 아티팩트
+.playwright-mcp/
+server/workspace/
+ep4-*.png
+gate-*.png
+chip-check-*.png
+
+# Node (playwright MCP 런타임 아티팩트 — 파이썬 프로젝트라 추적 불필요)
+node_modules/
+package.json
+package-lock.json
+
+# EP4 데스크톱 앱 (desktop/) — 소스는 추적, 빌드 산출물은 제외
+!desktop/package.json
+!desktop/package-lock.json
+desktop/release/
+ep4.exe
+
+# 런타임 DB / 로그 / 격리 worktree (로컬 상태)
+server/projects.db
+server/channels.db
+server/chat.db
+server/*.db-wal
+server/*.db-shm
+server/todo_list.md.migrated
+server/worktrees/
+server/screenshots/
+server/cache/
+server/webdocs/
+server/ep4.pid
+server/antigravity_watch.json
+log/
+
+# gate_server 런타임 DB
+gate_server/gate.db
+gate_server/gate.db-wal
+gate_server/gate.db-shm
+
+# Cloudflare 터널 URL (자동 생성)
+tunnel.url
+
+# EP4 인스턴스 식별자 (PC별 고유, 자동 생성)
+ep4_id.txt
+
+# 비공개 설정 (Firebase 서비스 계정 키, 마켓플레이스 GitHub 토큰)
+conf/*adminsdk*.json
+conf/ep4.local.conf
+conf/marketplace.conf
+
+# 다른 PC 이전용 비추적 파일 묶음 (gitignore.bat 산출물 — 토큰·DB 포함, 커밋 금지)
+gitignore.zip
+
+# tistory-post 스킬 산출물 (블로그 초안)
+output/tistory/
+
+# 로컬 전용 문서 (블로그 초안·프롬프트·내부 가이드·예제)
+docs/tistory/
+docs/prompt/
+docs/guide/
+docs/examples/
+
+# 개인 블로그 스타일이 담긴 로컬 전용 스킬
+.claude/skills/tistory-post/

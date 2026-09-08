@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EP4 웹 문서</title>
+<style>
+  :root {
+    --bg: #0f1115; --bg2: #161a22; --bg3: #1d2330;
+    --border: #2a3242; --text: #e5e9f0; --text-dim: #8b94a7;
+    --accent: #4f8cff; --accent2: #22c55e; --danger: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+    height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+  }
+  header {
+    padding: 14px 22px; background: var(--bg2); border-bottom: 1px solid var(--border);
+    display: flex; align-items: baseline; gap: 12px; flex-shrink: 0;
+  }
+  header h1 { font-size: 1.15rem; font-weight: 700; }
+  header .sub { font-size: .78rem; color: var(--text-dim); }
+  .layout { display: flex; flex: 1; min-height: 0; }
+
+  /* 왼쪽 바 */
+  aside {
+    width: 300px; min-width: 220px; background: var(--bg2);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+  }
+  .side-head {
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: .8rem; color: var(--text-dim);
+  }
+  .side-head button {
+    background: var(--danger); color: #fff; border: none; border-radius: 6px;
+    padding: 4px 10px; font-size: .75rem; cursor: pointer; display: none;
+  }
+  #toc { list-style: none; overflow-y: auto; flex: 1; }
+  #toc li {
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    border-bottom: 1px solid var(--border); cursor: pointer; font-size: .85rem;
+  }
+  #toc li:hover { background: var(--bg3); }
+  #toc li.active { background: var(--bg3); border-left: 3px solid var(--accent); padding-left: 9px; }
+  #toc li input[type=checkbox] { accent-color: var(--danger); cursor: pointer; flex-shrink: 0; }
+  #toc li .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .empty { padding: 30px 16px; color: var(--text-dim); font-size: .85rem; text-align: center; }
+
+  /* 오른쪽 내용 */
+  main { flex: 1; overflow-y: auto; padding: 26px 34px; min-width: 0; }
+  main h2 { font-size: 1.25rem; margin-bottom: 18px; line-height: 1.4; }
+  .sec { margin-bottom: 24px; }
+  .sec-label {
+    font-size: .75rem; font-weight: 700; letter-spacing: .06em;
+    color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px;
+  }
+  .sec-label.prompt::before { content: "💬 "; }
+  .sec-label.answer::before { content: "🤖 "; }
+  .box {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 20px; font-size: .9rem; line-height: 1.7; overflow-x: auto;
+  }
+  .box.prompt { border-left: 3px solid var(--accent); white-space: pre-wrap; word-break: break-word; }
+  .box.answer { border-left: 3px solid var(--accent2); }
+  .box.answer h1, .box.answer h2, .box.answer h3 { margin: 14px 0 8px; line-height: 1.4; }
+  .box.answer h1 { font-size: 1.1rem; } .box.answer h2 { font-size: 1.02rem; } .box.answer h3 { font-size: .95rem; }
+  .box.answer p { margin: 8px 0; word-break: break-word; }
+  .box.answer ul, .box.answer ol { margin: 8px 0 8px 22px; }
+  .box.answer li { margin: 3px 0; }
+  .box.answer code {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 5px; font-family: Consolas, monospace; font-size: .84em;
+  }
+  .box.answer pre {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; margin: 10px 0; overflow-x: auto;
+  }
+  .box.answer pre code { background: none; border: none; padding: 0; }
+  .box.answer blockquote { border-left: 3px solid var(--border); padding-left: 12px; color: var(--text-dim); margin: 8px 0; }
+  .box.answer hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .box.answer table { border-collapse: collapse; margin: 10px 0; font-size: .87em; }
+  .box.answer th, .box.answer td { border: 1px solid var(--border); padding: 6px 12px; text-align: left; vertical-align: top; }
+  .box.answer th { background: var(--bg3); font-weight: 700; white-space: nowrap; }
+  .meta { font-size: .74rem; color: var(--text-dim); margin-top: 4px; }
+
+  /* 커스텀 확인 모달 (네이티브 confirm 금지 규칙) */
+  .modal-ov {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal-ov.show { display: flex; }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 22px; width: 340px; max-width: 90vw;
+  }
+  .modal .m-title { font-weight: 700; margin-bottom: 10px; }
+  .modal .m-msg { font-size: .88rem; color: var(--text-dim); white-space: pre-wrap; margin-bottom: 18px; }
+  .modal .m-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal button { border: none; border-radius: 7px; padding: 8px 16px; font-size: .85rem; cursor: pointer; }
+  .modal .m-cancel { background: var(--bg3); color: var(--text); }
+  .modal .m-ok { background: var(--danger); color: #fff; }
+
+  @media (max-width: 720px) {
+    .layout { flex-direction: column; }
+    aside { width: 100%; max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="doc-title">웹 문서</h1>
+  <span class="sub">프롬프트 · 답변 모음</span>
+</header>
+<div class="layout">
+  <aside>
+    <div class="side-head">
+      <span id="toc-count">목차</span>
+      <button id="btn-del" onclick="deleteChecked()">선택 삭제</button>
+    </div>
+    <ul id="toc"></ul>
+  </aside>
+  <main id="content"><div class="empty">왼쪽 목차에서 항목을 선택하세요.</div></main>
+</div>
+
+<div class="modal-ov" id="modal-ov">
+  <div class="modal">
+    <div class="m-title" id="m-title"></div>
+    <div class="m-msg" id="m-msg"></div>
+    <div class="m-btns">
+      <button class="m-cancel" id="m-cancel">취소</button>
+      <button class="m-ok" id="m-ok">삭제</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ?token= 자동 로그인 (대시보드와 동일 규칙: 쿠키 저장 후 주소창에서 제거)
+(() => {
+  const q = new URLSearchParams(location.search);
+  const t = (q.get('token') || '').trim();
+  if (t) {
+    document.cookie = 'ep4_token=' + encodeURIComponent(t) + ';path=/;max-age=31536000;samesite=Lax';
+    q.delete('token');
+    history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : ''));
+  }
+})();
+
+const PID = parseInt(location.pathname.split('/')[2], 10);
+let doc = { project_name: '', entries: [] };
+let activeId = null;
+const checked = new Set();
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// 마크다운 라이트 렌더러 — HTML 이스케이프 후 최소 문법만 변환
+function mdRender(src) {
+  const codeBlocks = [];
+  let s = String(src || '').replace(/\r\n/g, '\n');
+  s = s.replace(/```([\s\S]*?)```/g, (_, code) => {
+    codeBlocks.push('<pre><code>' + esc(code.replace(/^\w*\n/, '')) + '</code></pre>');
+    return '\uE000' + (codeBlocks.length - 1) + '\uE000';
+  });
+  s = esc(s);
+  s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  s = s.replace(/^###### (.+)$/gm, '<h3>$1</h3>')
+       .replace(/^##### (.+)$/gm, '<h3>$1</h3>')
+       .replace(/^#### (.+)$/gm, '<h3>$1</h3>')
+       .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+       .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+       .replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  s = s.replace(/^(?:---|\*\*\*)\s*$/gm, '<hr>');
+  s = s.replace(/^&gt; ?(.*)$/gm, '<blockquote>$1</blockquote>');
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  // 목록: 연속된 -/숫자 줄을 ul/ol 로 묶기
+  s = s.replace(/(^|\n)((?:[-*] .*\n?)+)/g, (m, pre, items) =>
+    pre + '<ul>' + items.trim().split('\n').map(l => '<li>' + l.replace(/^[-*] /, '') + '</li>').join('') + '</ul>\n');
+  s = s.replace(/(^|\n)((?:\d+\. .*\n?)+)/g, (m, pre, items) =>
+    pre + '<ol>' + items.trim().split('\n').map(l => {
+      // 원본 번호 유지 — 목록이 문단으로 끊겨 <ol> 이 나뉘어도 번호가 리셋되지 않도록
+      const n = (l.match(/^(\d+)\. /) || [])[1] || '1';
+      return `<li value="${n}">` + l.replace(/^\d+\. /, '') + '</li>';
+    }).join('') + '</ol>\n');
+  // 테이블: | 헤더 | 행 + |---|---| 구분줄 + 본문 행들
+  s = s.replace(/(^|\n)(\|[^\n]+\|\n\|[ :|-]+\|(?:\n\|[^\n]+\|)*)/g, (m, pre, tbl) => {
+    const lines = tbl.trim().split('\n');
+    const cells = l => l.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|').map(c => c.trim());
+    const head = cells(lines[0]).map(c => '<th>' + c + '</th>').join('');
+    const rows = lines.slice(2).map(l => '<tr>' + cells(l).map(c => '<td>' + c + '</td>').join('') + '</tr>').join('');
+    return pre + '<table><thead><tr>' + head + '</tr></thead>' +
+           (rows ? '<tbody>' + rows + '</tbody>' : '') + '</table>\n';
+  });
+  // 문단: 블록 태그가 아닌 연속 줄을 <p> 로
+  s = s.split(/\n{2,}/).map(chunk => {
+    const c = chunk.trim();
+    if (!c) return '';
+    if (/^<(h\d|ul|ol|pre|blockquote|hr|table)/.test(c) || /^\uE000\d+\uE000$/.test(c)) return c;
+    return '<p>' + c.replace(/\n/g, '<br>') + '</p>';
+  }).join('\n');
+  s = s.replace(/\uE000(\d+)\uE000/g, (_, i) => codeBlocks[+i]);
+  return s;
+}
+
+function showConfirm(msg, title) {
+  return new Promise(resolve => {
+    const ov = document.getElementById('modal-ov');
+    document.getElementById('m-title').textContent = title || '확인';
+    document.getElementById('m-msg').textContent = msg;
+    ov.classList.add('show');
+    const done = v => { ov.classList.remove('show'); resolve(v); };
+    document.getElementById('m-ok').onclick = () => done(true);
+    document.getElementById('m-cancel').onclick = () => done(false);
+    ov.onclick = e => { if (e.target === ov) done(false); };
+  });
+}
+
+function renderToc() {
+  const toc = document.getElementById('toc');
+  const entries = doc.entries || [];
+  document.getElementById('doc-title').textContent = doc.project_name || '웹 문서';
+  document.title = (doc.project_name || 'EP4') + ' — 웹 문서';
+  document.getElementById('toc-count').textContent = `목차 (${entries.length})`;
+  if (!entries.length) {
+    toc.innerHTML = '<div class="empty">항목이 없습니다.<br>대시보드에서 태스크를 선택해 "웹 만들기"를 누르세요.</div>';
+    document.getElementById('content').innerHTML = '<div class="empty">표시할 항목이 없습니다.</div>';
+    updateDelBtn();
+    return;
+  }
+  toc.innerHTML = entries.map(e => `
+    <li id="toc-${e.task_id}" class="${e.task_id === activeId ? 'active' : ''}" onclick="showEntry(${e.task_id})">
+      <input type="checkbox" ${checked.has(e.task_id) ? 'checked' : ''}
+             onclick="event.stopPropagation()" onchange="toggleCheck(${e.task_id}, this.checked)">
+      <span class="t" title="${esc(e.title)}">${esc(e.title)}</span>
+    </li>`).join('');
+  updateDelBtn();
+}
+
+function showEntry(tid) {
+  const e = (doc.entries || []).find(x => x.task_id === tid);
+  if (!e) return;
+  activeId = tid;
+  document.querySelectorAll('#toc li').forEach(li => li.classList.toggle('active', li.id === 'toc-' + tid));
+  document.getElementById('content').innerHTML = `
+    <h2>${esc(e.title)}</h2>
+    <div class="sec">
+      <div class="sec-label prompt">프롬프트</div>
+      <div class="box prompt">${esc(e.prompt)}</div>
+    </div>
+    <div class="sec">
+      <div class="sec-label answer">답변</div>
+      <div class="box answer">${e.answer ? mdRender(e.answer) : '<span style="color:var(--text-dim)">답변이 아직 없습니다.</span>'}</div>
+      <div class="meta">추가: ${esc((e.added_at || '').replace('T', ' ').slice(0, 16))}</div>
+    </div>`;
+  document.getElementById('content').scrollTop = 0;
+}
+
+function toggleCheck(tid, on) {
+  if (on) checked.add(tid); else checked.delete(tid);
+  updateDelBtn();
+}
+
+function updateDelBtn() {
+  const btn = document.getElementById('btn-del');
+  // CSS 기본값이 display:none 이므로 '' 로 되돌리면 다시 숨겨진다 — 명시적으로 지정
+  btn.style.display = checked.size > 0 ? 'inline-block' : 'none';
+  btn.textContent = `선택 삭제 (${checked.size})`;
+}
+
+async function deleteChecked() {
+  const ids = [...checked];
+  if (!ids.length) return;
+  const ok = await showConfirm(`선택한 ${ids.length}개 항목을 웹 문서에서 삭제할까요?\n(태스크 자체는 삭제되지 않습니다)`, '항목 삭제');
+  if (!ok) return;
+  try {
+    const res = await fetch(`/api/projects/${PID}/webdoc/delete`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({task_ids: ids})
+    });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || 'delete failed');
+  } catch (e) {
+    await showConfirm('삭제 중 오류가 발생했습니다: ' + e.message, '오류');
+    return;
+  }
+  checked.clear();
+  if (ids.includes(activeId)) activeId = null;
+  await load();
+}
+
+async function load() {
+  let res;
+  try {
+    res = await fetch(`/api/projects/${PID}/webdoc`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    doc = await res.json();
+  } catch (e) {
+    document.getElementById('content').innerHTML =
+      `<div class="empty">문서를 불러오지 못했습니다 (${esc(e.message)}).<br>대시보드에 먼저 로그인했는지 확인하세요.</div>`;
+    return;
+  }
+  renderToc();
+  const entries = doc.entries || [];
+  if (entries.length) showEntry(activeId && entries.some(x => x.task_id === activeId) ? activeId : entries[0].task_id);
+}
+
+load();
+</script>
+</body>
+</html>

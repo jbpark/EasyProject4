@@ -1,0 +1,17 @@
+{
+  "id": "dashboard",
+  "type": "view",
+  "name": "대시보드",
+  "names": { "ko": "대시보드", "en": "Dashboard", "zh": "仪表盘", "fr": "Tableau de bord", "de": "Dashboard", "es": "Panel" },
+  "icon": "📊",
+  "version": "1.0.0",
+  "menu": { "section": "main", "order": 0 },
+  "route": "dashboard",
+  "entry": "view.js",
+  "description": "프로젝트 현황과 태스크 통계를 한눈에 봅니다.",
+  "descriptions": {
+    "ko": "프로젝트 현황과 태스크 통계를 한눈에 봅니다.",
+    "en": "Overview of project status and task statistics at a glance."
+  },
+  "actions": [{ "id": "open", "label": "대시보드 열기", "deeplink": "/#/view/dashboard" }]
+}

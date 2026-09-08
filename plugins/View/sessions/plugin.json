@@ -1,0 +1,17 @@
+{
+  "id": "sessions",
+  "type": "view",
+  "name": "세션",
+  "names": { "ko": "세션", "en": "Sessions", "zh": "会话", "fr": "Sessions", "de": "Sitzungen", "es": "Sesiones" },
+  "icon": "🖥",
+  "version": "1.1.0",
+  "menu": { "section": "main", "order": 40, "badge": { "id": "sb-badge-sessions", "text": "0", "hidden": true } },
+  "route": "sessions",
+  "entry": "view.js",
+  "description": "명령프롬프트(PTY)·Claude CLI·Antigravity CLI 세션 목록을 보고 관리합니다.",
+  "descriptions": {
+    "ko": "명령프롬프트(PTY)·Claude CLI·Antigravity CLI 세션 목록을 보고 관리합니다.",
+    "en": "View and manage terminal (PTY), Claude CLI, and Antigravity CLI sessions."
+  },
+  "actions": [{ "id": "open", "label": "세션 보기", "deeplink": "/#/view/sessions" }]
+}

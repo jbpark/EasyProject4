@@ -1,0 +1,39 @@
+{
+  "name": "ep4-desktop",
+  "version": "1.0.0",
+  "description": "EasyProject4 데스크톱 앱 — EP4 서버(run.bat)를 내장 실행하는 Electron 셸",
+  "main": "main.js",
+  "author": "EasyProject4",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.easyproject4.desktop",
+    "productName": "EP4",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "splash.html"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "ep4.exe"
+    }
+  }
+}

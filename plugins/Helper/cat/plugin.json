@@ -1,0 +1,13 @@
+{
+  "id": "cat",
+  "type": "agent",
+  "name": "고양이",
+  "names": { "ko": "고양이", "en": "Cat" },
+  "icon": "🐱",
+  "version": "1.0.0",
+  "description": "야옹~ 고양이 이모지 마스코트. 꾹꾹이 중에도 곁을 지켜줍니다.",
+  "descriptions": {
+    "ko": "야옹~ 고양이 이모지 마스코트. 꾹꾹이 중에도 곁을 지켜줍니다.",
+    "en": "Meow~ Cat emoji mascot. Stays by your side even while kneading."
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "plugins",
+  "type": "view",
+  "required": true,
+  "name": "확장",
+  "names": { "ko": "확장", "en": "Extensions", "zh": "扩展", "fr": "Extensions", "de": "Erweiterungen", "es": "Extensiones" },
+  "icon": "🧩",
+  "version": "2.8.0",
+  "menu": { "section": "main", "order": 1 },
+  "route": "plugins",
+  "entry": "view.js",
+  "description": "EP4의 확장 기능을 설치·삭제·관리합니다. View 플러그인, MCP 커넥터, Claude Skill/Plugin, 도우미를 다룹니다.",
+  "descriptions": {
+    "ko": "EP4의 확장 기능(플러그인·스킬·MCP·도우미)을 설치·삭제·관리합니다.",
+    "en": "Install, remove, and manage EP4 extensions (plugins, skills, MCP, helpers)."
+  },
+  "actions": [
+    {
+      "id": "open",
+      "label": "확장 관리 열기",
+      "description": "설치된 확장 목록과 마켓을 봅니다",
+      "deeplink": "/#/view/plugins"
+    }
+  ]
+}

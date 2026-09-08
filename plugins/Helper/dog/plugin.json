@@ -1,0 +1,13 @@
+{
+  "id": "dog",
+  "type": "agent",
+  "name": "강아지",
+  "names": { "ko": "강아지", "en": "Dog" },
+  "icon": "🐶",
+  "version": "1.0.0",
+  "description": "멍멍! 강아지 이모지 마스코트. 꼬리 흔들며 늘 대기 중입니다.",
+  "descriptions": {
+    "ko": "멍멍! 강아지 이모지 마스코트. 꼬리 흔들며 늘 대기 중입니다.",
+    "en": "Woof! Dog emoji mascot. Always on standby with a wagging tail."
+  }
+}

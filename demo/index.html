@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EasyProject4 데모</title>
+  <meta name="description" content="EasyProject4(EP4) — 로컬 PC의 Claude CLI에게 일을 시키는 태스크 하네스 대시보드를 Mock 데이터로 소개하는 데모 페이지입니다. 실제 서버·저장소·실행 기록이 아닙니다." />
+  <meta name="robots" content="index,follow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23d97757'/%3E%3Ctext x='50' y='62' font-family='Segoe UI,Arial,sans-serif' font-size='38' font-weight='800' fill='white' text-anchor='middle'%3EEP4%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-dark">
+  <div class="demo-banner">
+    <span><b>DEMO</b> · 이 페이지의 모든 프로젝트·태스크·로그는 <b>Mock 데이터</b>입니다. 실제 서버에 연결되지 않으며 Claude CLI도 실행되지 않습니다.</span>
+    <span>EasyProject4 기능 소개용 데모 · 로컬 PC에서 <code>run.bat</code>으로 실제 서버를 띄울 수 있습니다</span>
+  </div>
+
+  <div class="app">
+    <!-- ── 사이드바 (실제 대시보드와 같은 구조) ── -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sb-head">
+        <div class="sb-logo">EP4</div>
+        <div class="sb-brand">
+          <div class="sb-brand-name">EasyProject4</div>
+          <div class="sb-brand-sub">DEMO · Mock Data</div>
+        </div>
+      </div>
+      <nav>
+        <div class="nav-section-label">메인</div>
+        <div id="nav-menu-main"></div>
+        <div class="nav-section-label" style="margin-top:8px">실행</div>
+        <div class="nav-item" id="nav-run"><span class="nav-icon">▶</span><span>실행</span></div>
+        <div class="nav-item" id="nav-pause"><span class="nav-icon">⏸</span><span>일시정지</span></div>
+        <div class="nav-item" id="nav-reset"><span class="nav-icon">↺</span><span>새로고침</span></div>
+      </nav>
+      <div class="sb-foot">
+        <div class="sb-cli"><span class="dot ok"></span>Claude CLI 연결됨 <span class="muted">(모의)</span></div>
+        <div class="sb-cli"><span class="dot ok"></span>Antigravity CLI 연결됨 <span class="muted">(모의)</span></div>
+        <div class="sb-status"><span class="status-dot" id="sb-dot"></span><span id="sb-status-text">대기 중</span></div>
+        <div class="sb-version">Harness v1.0 · demo</div>
+      </div>
+    </aside>
+    <div class="sb-backdrop" id="sb-backdrop"></div>
+
+    <!-- ── 메인 ── -->
+    <div class="main-wrap">
+      <header class="global-header">
+        <button class="nav-toggle" id="nav-toggle" title="메뉴">☰</button>
+        <div class="search-wrap">
+          <input class="search-input" id="globalSearch" placeholder="태스크 검색… (데모)" />
+        </div>
+        <span class="chip chip-ok" id="header-status"><span class="pulse-dot"></span><span id="header-status-text">서버 연결됨 (모의)</span></span>
+        <button class="btn-icon" id="btn-qr" title="모바일 QR 연결">📱</button>
+        <div class="settings-wrap">
+          <button class="btn-icon" id="btn-settings" title="설정">⚙</button>
+          <div id="settingsDropdown" class="settings-dropdown" hidden>
+            <div class="settings-section-label">테마</div>
+            <button class="settings-item" data-theme="dark"><span>🌙</span><span>다크</span><span class="chk">✓</span></button>
+            <button class="settings-item" data-theme="light"><span>☀️</span><span>라이트</span><span class="chk"></span></button>
+            <button class="settings-item" data-theme="midnight"><span>🌌</span><span>미드나잇</span><span class="chk"></span></button>
+            <button class="settings-item" data-theme="forest"><span>🌲</span><span>포레스트</span><span class="chk"></span></button>
+            <button class="settings-item" data-theme="sunset"><span>🌅</span><span>선셋</span><span class="chk"></span></button>
+            <div class="settings-section-label" style="border-top:1px solid var(--border)">언어</div>
+            <button class="settings-item" data-lang="ko"><span>🇰🇷</span><span>한국어</span><span class="chk">✓</span></button>
+            <button class="settings-item" data-lang="en"><span>🇺🇸</span><span>English</span><span class="chk"></span></button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <div class="page-head">
+          <h1 class="page-title" id="page-title">대시보드</h1>
+          <span class="tag yellow">DEMO · Mock Data</span>
+        </div>
+        <div class="content-wrap">
+          <section class="content" id="content"></section>
+          <aside class="guide" id="guide"></aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 커스텀 모달 (EP4 UI 규칙: 브라우저 네이티브 다이얼로그 미사용) -->
+  <div class="modal-bg" id="modal">
+    <div class="modal">
+      <div class="row between"><h3 id="modal-title">제목</h3><button class="small" id="modal-x">×</button></div>
+      <div id="modal-body"></div>
+      <div class="row" style="justify-content:flex-end;margin-top:14px" id="modal-actions"></div>
+    </div>
+  </div>
+
+  <!-- 도우미 마스코트 (Helper 플러그인) -->
+  <button class="helper-btn" id="helperBtn" title="도우미 켜기">🐙</button>
+  <div class="helper-panel" id="helper">
+    <div class="hd"><span>🐙 문어 도우미 (데모)</span><button class="small" id="helperClose" title="닫기">×</button></div>
+    <div class="msgs" id="helperMsgs"></div>
+    <div class="quick" id="helperQuick"></div>
+    <div class="in"><input id="helperIn" placeholder="EP4에 대해 물어보세요..." /><button class="primary small" id="helperSend">전송</button></div>
+  </div>
+
+  <div class="toast-wrap" id="toasts"></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

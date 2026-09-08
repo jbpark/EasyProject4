@@ -1,0 +1,13 @@
+{
+  "id": "penguin",
+  "type": "agent",
+  "name": "펭귄",
+  "names": { "ko": "펭귄", "en": "Penguin" },
+  "icon": "🐧",
+  "version": "1.0.0",
+  "description": "시원한 펭귄 이모지 마스코트. 뿅뿅 빠르게 움직이며 기다립니다.",
+  "descriptions": {
+    "ko": "시원한 펭귄 이모지 마스코트. 뿅뿅 빠르게 움직이며 기다립니다.",
+    "en": "Cool penguin emoji mascot. Bounces around quickly while waiting."
+  }
+}

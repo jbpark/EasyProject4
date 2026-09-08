@@ -1,0 +1,7 @@
+{
+  "source": "firebase+github",
+  "firebase_url": "https://<프로젝트>-default-rtdb.asia-southeast1.firebasedatabase.app",
+  "github_repo": "<GitHub 사용자명>/ep4-marketplace",
+  "manager_url": "",
+  "github_token": "<GitHub Personal Access Token — 대시보드 플러그인 설정에서 입력하면 자동 저장됨>"
+}

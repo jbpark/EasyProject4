@@ -1,0 +1,19 @@
+{
+  "id": "tasks",
+  "type": "view",
+  "name": "태스크",
+  "names": { "ko": "태스크", "en": "Tasks", "zh": "任务", "fr": "Tâches", "de": "Aufgaben", "es": "Tareas" },
+  "icon": "✅",
+  "version": "1.0.0",
+  "menu": { "section": "main", "order": 20, "badge": { "id": "sb-badge-total", "text": "0" } },
+  "route": "todo",
+  "description": "선택한 프로젝트의 태스크를 등록·수정·실행합니다.",
+  "descriptions": {
+    "ko": "선택한 프로젝트의 태스크를 등록·수정·실행합니다.",
+    "en": "Register, edit, and run tasks for the selected project."
+  },
+  "actions": [
+    { "id": "add_task", "label": "새 태스크 등록", "deeplink": "/#/view/todo?action=new" },
+    { "id": "run_all", "label": "전체 실행", "deeplink": "/#/view/todo?action=run_all" }
+  ]
+}

@@ -1,0 +1,40 @@
+name: ep4_mobile
+description: EasyProject4 모바일 앱 — Cloudflare Tunnel로 EP4 서버에 연결해 프로젝트·태스크·실행로그·세션을 관리.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.0
+  provider: ^6.1.2
+  shared_preferences: ^2.2.3
+  cupertino_icons: ^1.0.6
+  mobile_scanner: ^5.2.3   # QR 스캔으로 EP4 연결 (Android/iOS)
+  webview_flutter: ^4.10.0 # 반응형 웹 모드 (Android/iOS/macOS)
+  url_launcher: ^6.3.0     # 반응형 웹 모드 폴백 (Windows/Web)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.1
+
+# 런처 아이콘 생성: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  adaptive_icon_background: "#0F172A"
+  adaptive_icon_foreground: "assets/icon/app_icon_fg.png"
+  ios: true
+  remove_alpha_ios: true
+  windows:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    icon_size: 256
+
+flutter:
+  uses-material-design: true

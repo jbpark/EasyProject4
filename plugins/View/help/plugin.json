@@ -1,0 +1,20 @@
+{
+  "id": "help",
+  "type": "view",
+  "name": "도움말",
+  "names": { "ko": "도움말", "en": "Help", "zh": "帮助", "fr": "Aide", "de": "Hilfe", "es": "Ayuda" },
+  "icon": "❓",
+  "version": "1.0.0",
+  "menu": { "section": "main", "order": 50 },
+  "route": "help",
+  "entry": "view.js",
+  "description": "EP4 사용법과 외부 연동 API를 안내합니다.",
+  "descriptions": {
+    "ko": "EP4 사용법과 외부 연동 API를 안내합니다.",
+    "en": "EP4 usage guide and integration API reference."
+  },
+  "actions": [
+    { "id": "open", "label": "도움말 열기", "deeplink": "/#/view/help" },
+    { "id": "open_api", "label": "API 문서 보기", "deeplink": "/#/view/help?section=api" }
+  ]
+}
