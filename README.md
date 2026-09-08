@@ -10,6 +10,7 @@
 [![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57?logo=sqlite&logoColor=white)](server/)
 [![Claude CLI](https://img.shields.io/badge/AI-Claude%20CLI-D97757?logo=anthropic&logoColor=white)](#주요-기능)
 [![pluggy](https://img.shields.io/badge/Plugins-pluggy-FFD43B?logo=python&logoColor=black)](plugins/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [**🔗 라이브 데모 보기**](https://easyproject4-demo.pages.dev) · [주요 기능](#주요-기능) · [화면 소개](#화면-소개) · [빠른 시작](#빠른-시작) · [아키텍처](#아키텍처) · [설정](#설정-파일)
 
@@ -259,6 +260,19 @@ sequenceDiagram
 - 앱은 빌드 시점에 값이 필요하므로 `mobile.bat` 이 이 설정을 읽어 `--dart-define` 으로 전달합니다.
 - **DB 주소는 저장소에 넣지 마세요.** 인증 없이 읽는 구조라 주소가 알려지면 터널 URL 이 노출됩니다.
 
-## Third-Party
+## 라이선스
 
-이 프로젝트에 포함된 오픈소스 고지는 [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES)를 참조하세요.
+[MIT License](LICENSE) — 상업적 이용, 수정, 배포, 사적 이용이 모두 자유롭습니다.
+사용할 때 저작권 표시와 라이선스 전문을 함께 포함하기만 하면 됩니다. 저자는 어떤 보증도 하지 않으며 책임도 지지 않습니다.
+
+```
+Copyright (c) 2026 jbpark
+```
+
+### Third-Party
+
+이 프로젝트는 MIT 라이선스로 배포되는 [lazyclaw (Claude Control Center)](https://github.com/cmblir/lazyclaw)에서
+마스코트 자산과 대시보드 UI·채팅 SSE 코드 일부를 가져와 사용합니다.
+원저작자 표시를 포함한 전체 고지는 [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES)에 있으며, 이 프로젝트를 재배포할 때 함께 포함해야 합니다.
+
+주요 런타임 의존성(`pywinpty` · `pyte` · `firebase-admin` · `qrcode` · `pluggy`)은 각자의 라이선스를 따릅니다. [requirements.txt](requirements.txt)를 참고하세요.
