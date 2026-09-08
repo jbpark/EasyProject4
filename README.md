@@ -227,11 +227,13 @@ sequenceDiagram
 | 문서 | 내용 |
 |------|------|
 | [CLAUDE.md](CLAUDE.md) | 코드베이스 구조·규칙 (Claude Code용 가이드 겸 아키텍처 문서) |
-| [docs/tunnel_guide.md](docs/guide/tunnel_guide.md) | Cloudflare Tunnel 외부 접속 가이드 |
-| [docs/mcp_guide.md](docs/prompt/mcp_guide.md) | Claude CLI MCP·훅 연동 가이드 |
-| [docs/mobile_guide.md](docs/prompt/mobile_guide.md) | 모바일 앱 빌드·연결 가이드 |
-| [docs/plugin_architecture_design.md](docs/guide/plugin_architecture_design.md) | 플러그인 아키텍처 설계 |
-| [docs/examples/backend_plugin/](docs/examples/backend_plugin/) | 백엔드 플러그인 작성 템플릿 |
+| [demo/README.md](demo/README.md) | 데모 사이트 구성과 Cloudflare Pages 배포 방법 |
+| [desktop/README.md](desktop/README.md) | Electron 데스크톱 앱 빌드 |
+| [mobile/README.md](mobile/README.md) | Flutter 앱 빌드·연결 |
+| [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES) | 포함된 오픈소스 고지 |
+
+터널·MCP 연동·플러그인 설계 등 상세 가이드는 로컬 `docs/` 폴더에 있으며, 개인 메모가 섞여 있어 저장소에는 포함하지 않았습니다.
+핵심 내용은 대시보드의 **도움말** 화면([데모에서 보기](https://easyproject4-demo.pages.dev/#/help))과 위 아키텍처 절에 정리되어 있습니다.
 
 ## 설정 파일
 
