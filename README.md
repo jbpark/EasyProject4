@@ -126,25 +126,101 @@ conda 환경 생성부터 패키지 설치, 서버 기동까지 한 번에 처�
 
 ## 아키텍처
 
-```
-server.py (7788)           ← 메인 서버 + 하네스 실행 엔진 (Python 표준 라이브러리 중심)
-  ├─ dist/                 ← 웹 대시보드 정적 파일
-  ├─ server/projects.db    ← SQLite DB (projects · project_tasks · task_runs)
-  └─ server/worktrees/     ← Git 격리 worktree 작업 공간
+EP4는 `server.py` 한 프로세스가 **HTTP 서버 · 하네스 실행 엔진 · 세션 관리 · 이벤트 허브**를 모두 맡습니다.
+외부 의존성을 최소화해 파이썬 표준 라이브러리를 중심으로 구현했고, 확장은 플러그인으로 분리했습니다.
 
-mobile/                    ← Flutter 앱 (Android/iOS/Windows)
-desktop/                   ← Electron 데스크톱 앱
-plugins/                   ← View · Data · Helper · MCP 플러그인
-ep4_mcp.py                 ← Claude CLI MCP 서버
-ep4_hook_prompt.py / ep4_hook_stop.py  ← CLI 훅 (프롬프트/응답 자동 기록)
+```mermaid
+flowchart TB
+    subgraph clients["클라이언트"]
+        web["🌐 웹 대시보드<br/><code>dist/</code>"]
+        mobileApp["📱 Flutter 앱<br/><code>mobile/</code>"]
+        desktopApp["🖥 Electron 앱<br/><code>desktop/</code>"]
+        cli["⌨ Claude CLI · Antigravity CLI<br/>훅 + MCP"]
+    end
+
+    subgraph server["server.py · localhost:7788"]
+        http["HTTP 핸들러<br/>do_GET · do_POST · do_DELETE"]
+        harness["하네스 엔진<br/><code>harness_runner()</code>"]
+        session["세션 관리<br/><code>session_create()</code> · PTY"]
+        sse["이벤트 허브<br/><code>emit()</code> → SSE"]
+        plug["플러그인 매니저<br/>pluggy 훅"]
+    end
+
+    subgraph storage["로컬 저장소"]
+        db[("SQLite WAL<br/>projects · project_tasks · task_runs")]
+        wt["Git worktree<br/><code>server/worktrees/</code>"]
+    end
+
+    subgraph ext["실행 대상"]
+        claude["claude / gemini CLI<br/>subprocess 또는 PTY 세션"]
+        repo["작업 저장소<br/><code>project_root</code>"]
+    end
+
+    web & mobileApp & desktopApp -->|"REST /api/*"| http
+    web & mobileApp & desktopApp -.->|"SSE /api/events"| sse
+    cli -->|"태스크 등록 · 결과 기록"| http
+    mobileApp -. "Cloudflare Tunnel" .-> http
+
+    http --> harness
+    http --> session
+    http --> plug
+    harness --> sse
+    harness --> db
+    harness --> wt
+    harness --> claude
+    session --> claude
+    claude --> repo
+    wt --> repo
+    plug -->|"View · MCP · Data · Helper"| http
 ```
 
-태스크 실행 흐름:
+| 구성 | 역할 |
+|------|------|
+| `server.py` | HTTP 서버 + 하네스 실행 엔진. 태스크 순차 실행, Git 격리, SSE 푸시를 모두 담당 |
+| `dist/` | 웹 대시보드 정적 파일. 메뉴는 `/api/plugins` 레지스트리로 동적 구성 |
+| `server/projects.db` | SQLite(WAL). `projects` · `project_tasks` · `task_runs` |
+| `server/worktrees/` | 태스크별 Git worktree 작업 공간 |
+| `plugins/` | `View` 화면 · `MCP` 커넥터 · `Data` 데이터 · `Helper` 도우미. pluggy 훅으로 백엔드 확장 |
+| `ep4_mcp.py` | Claude CLI용 MCP 서버 (`ep4_create_task`, `ep4_log_result` 등) |
+| `ep4_hook_prompt.py` / `ep4_hook_stop.py` | CLI 훅. 터미널 대화를 태스크·실행 로그로 자동 기록 |
 
+### 태스크 실행 흐름
+
+`project_root`에 git이 있으면 태스크마다 격리 브랜치를 만들고, 끝나면 프로젝트 브랜치를 거쳐 main까지 자동으로 합칩니다.
+git이 없는 폴더는 worktree 없이 그 자리에서 실행합니다.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as 사용자
+    participant S as server.py
+    participant G as Git
+    participant C as Claude CLI
+    participant D as projects.db
+
+    U->>S: POST /api/projects/{id}/tasks/{tid}/run
+    S->>S: harness_runner() 시작
+    S->>G: worktree add -b project/{slug}/taskNNN
+    G-->>S: 격리 작업 폴더
+    S->>C: 프롬프트 전달 (subprocess 또는 PTY 세션)
+    loop 실행 중
+        C-->>S: 출력 스트림
+        S-->>U: SSE log_line
+    end
+    C-->>S: 최종 응답
+    S->>D: task_runs INSERT (출력·트레이스·소요시간)
+    S->>G: commit → 프로젝트 브랜치 → main 머지
+    alt 충돌 발생
+        G-->>S: 머지 실패
+        S->>D: status = error (변경은 worktree에 보존)
+    else 정상
+        G-->>S: merged
+    end
+    S-->>U: SSE run_done
 ```
-태스크 실행 → worktree 브랜치 생성 → claude CLI 실행 → 결과 기록
-  → 커밋 → 프로젝트 브랜치 머지 → main 머지 → SSE 알림
-```
+
+> 실행 중에 태스크를 더 추가하면 큐에 쌓였다가 현재 태스크가 끝난 뒤 이어서 실행됩니다.
+> 실패한 태스크는 프로젝트의 `retry_count` 만큼 자동 재시도합니다.
 
 ## 문서
 
