@@ -131,47 +131,49 @@ EP4는 `server.py` 한 프로세스가 **HTTP 서버 · 하네스 실행 엔진 
 
 ```mermaid
 flowchart TB
-    subgraph clients["클라이언트"]
-        web["🌐 웹 대시보드<br/><code>dist/</code>"]
-        mobileApp["📱 Flutter 앱<br/><code>mobile/</code>"]
-        desktopApp["🖥 Electron 앱<br/><code>desktop/</code>"]
-        cli["⌨ Claude CLI · Antigravity CLI<br/>훅 + MCP"]
+    subgraph clients[" 클라이언트 "]
+        direction LR
+        web["🌐 웹 대시보드"]
+        mob["📱 Flutter 앱"]
+        desk["🖥 Electron 앱"]
+        cli["⌨ Claude / Antigravity CLI"]
     end
 
-    subgraph server["server.py · localhost:7788"]
-        http["HTTP 핸들러<br/>do_GET · do_POST · do_DELETE"]
-        harness["하네스 엔진<br/><code>harness_runner()</code>"]
-        session["세션 관리<br/><code>session_create()</code> · PTY"]
-        sse["이벤트 허브<br/><code>emit()</code> → SSE"]
-        plug["플러그인 매니저<br/>pluggy 훅"]
+    subgraph srv[" server.py · localhost:7788 "]
+        direction TB
+        http["HTTP 핸들러"]
+        subgraph core[" "]
+            direction LR
+            harness["하네스 엔진<br/>harness_runner()"]
+            session["세션 관리<br/>PTY · subprocess"]
+            plug["플러그인 매니저<br/>pluggy"]
+        end
+        sse["이벤트 허브<br/>emit() → SSE"]
     end
 
-    subgraph storage["로컬 저장소"]
-        db[("SQLite WAL<br/>projects · project_tasks · task_runs")]
-        wt["Git worktree<br/><code>server/worktrees/</code>"]
+    subgraph store[" 로컬 상태 "]
+        direction LR
+        db[("SQLite WAL<br/>projects · tasks · runs")]
+        wt["Git worktree<br/>server/worktrees/"]
     end
 
-    subgraph ext["실행 대상"]
-        claude["claude / gemini CLI<br/>subprocess 또는 PTY 세션"]
-        repo["작업 저장소<br/><code>project_root</code>"]
-    end
+    claudecli["claude / gemini 프로세스"]
+    repo["작업 저장소<br/>project_root"]
 
-    web & mobileApp & desktopApp -->|"REST /api/*"| http
-    web & mobileApp & desktopApp -.->|"SSE /api/events"| sse
-    cli -->|"태스크 등록 · 결과 기록"| http
-    mobileApp -. "Cloudflare Tunnel" .-> http
+    web & desk --> http
+    mob -. "Cloudflare Tunnel" .-> http
+    cli -- "훅 · MCP" --> http
 
-    http --> harness
-    http --> session
-    http --> plug
+    http --> harness & session & plug
     harness --> sse
+    sse -. "실시간 푸시" .-> clients
+
     harness --> db
     harness --> wt
-    harness --> claude
-    session --> claude
-    claude --> repo
-    wt --> repo
-    plug -->|"View · MCP · Data · Helper"| http
+    harness --> claudecli
+    session --> claudecli
+    claudecli --> repo
+    wt -. "격리 브랜치" .-> repo
 ```
 
 | 구성 | 역할 |
