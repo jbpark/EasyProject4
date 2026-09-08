@@ -78,3 +78,6 @@ docs/examples/
 
 # 개인 블로그 스타일이 담긴 로컬 전용 스킬
 .claude/skills/tistory-post/
+
+# wrangler 로컬 캐시 (Cloudflare 계정 ID·계정 이름 포함 — 커밋 금지)
+.wrangler/
