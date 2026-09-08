@@ -1,12 +1,35 @@
+<div align="center">
+
 # EasyProject4 (EP4)
 
-**로컬 PC의 Claude CLI에게 일을 시키는 태스크 하네스.**
+**로컬 PC의 Claude CLI에게 일을 시키는 태스크 하네스**
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](requirements.txt)
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](mobile/)
+[![Electron](https://img.shields.io/badge/Electron-31-47848F?logo=electron&logoColor=white)](desktop/)
+[![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57?logo=sqlite&logoColor=white)](server/)
+[![Claude CLI](https://img.shields.io/badge/AI-Claude%20CLI-D97757?logo=anthropic&logoColor=white)](#주요-기능)
+[![pluggy](https://img.shields.io/badge/Plugins-pluggy-FFD43B?logo=python&logoColor=black)](plugins/)
+
+[**🔗 라이브 데모 보기**](https://easyproject4-demo.pages.dev) · [주요 기능](#주요-기능) · [화면 소개](#화면-소개) · [빠른 시작](#빠른-시작) · [아키텍처](#아키텍처) · [설정](#설정-파일)
+
+<a href="https://easyproject4-demo.pages.dev"><img src="docs/images/demo_dashboard.png" width="880" alt="EasyProject4 대시보드 (데모, Mock 데이터)" /></a>
+
+<sub>위 화면은 <a href="https://easyproject4-demo.pages.dev">데모 사이트</a>를 캡처한 것으로 모든 프로젝트·태스크·로그는 Mock 데이터입니다. 실제 저장소나 실행 기록이 아닙니다.</sub>
+
+</div>
+
 프로젝트별로 할 일(태스크)을 큐에 쌓아두면 EP4가 순서대로 Claude CLI를 실행하고,
 Git 브랜치 격리 → 커밋 → main 머지까지 자동으로 처리합니다.
+웹 대시보드·Flutter 모바일 앱·Electron 데스크톱 앱에서 같은 상태를 실시간으로 확인할 수 있습니다.
 
 ```
 할 일을 적는다 → 실행을 누른다 → 커피를 마신다 → diff 를 확인한다
 ```
+
+> ⚠️ EP4는 Claude CLI를 `--dangerously-skip-permissions` 로 실행할 수 있습니다. 신뢰할 수 있는 저장소에서만 사용하고, 태스크가 만든 변경은 머지 전에 diff로 확인하세요.
+
+---
 
 ## 주요 기능
 
@@ -17,6 +40,69 @@ Git 브랜치 격리 → 커밋 → main 머지까지 자동으로 처리합니�
 - **Claude CLI 연동** — MCP 도구(`ep4_create_task` 등)와 훅(UserPromptSubmit/Stop)으로 터미널 대화가 자동으로 태스크·실행 로그로 기록. Gemini CLI(Antigravity)도 동일 훅 재사용
 - **멀티 PC(peer)** — 여러 EP4 인스턴스 연결, NAT 뒤 PC는 push 방식으로 프로젝트 공유·원격 태스크 지시
 - **플러그인 아키텍처** — pluggy 훅 기반. 화면은 `plugin.json` + `view.js`, 백엔드는 `backend.py` 폴더 하나로 확장. 스킬/에이전트 마켓 공유 지원
+
+---
+
+## 화면 소개
+
+대시보드의 메뉴는 모두 플러그인이며, 왼쪽 목록은 설치·활성 상태에 따라 실시간으로 바뀝니다.
+아래 화면은 [데모 사이트](https://easyproject4-demo.pages.dev)에서 직접 눌러 볼 수 있고, 각 화면 오른쪽 안내 상자가 메뉴의 용도와 사용 순서를 설명합니다.
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <a href="https://easyproject4-demo.pages.dev/#/projects"><img src="docs/images/demo_projects.png" alt="프로젝트 화면" /></a><br/>
+      <b>🗂 프로젝트</b><br/>
+      <sub>저장소 경로·기본 모델·엔진(Claude/Antigravity)·타임아웃·세션을 프로젝트마다 지정. <code>project_root</code>에 git이 있으면 worktree 격리가 자동으로 켜집니다</sub>
+    </td>
+    <td width="50%" align="center">
+      <a href="https://easyproject4-demo.pages.dev/#/todo"><img src="docs/images/demo_tasks.png" alt="태스크 화면" /></a><br/>
+      <b>✅ 태스크</b><br/>
+      <sub>할 일과 프롬프트를 큐에 등록. 트리거(수동·스케줄·선행 완료 후)와 모델을 태스크별로 바꾸고, 상태 필터로 대기·실행·완료·실패를 나눠 봅니다</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <a href="https://easyproject4-demo.pages.dev/#/log"><img src="docs/images/demo_runlog.png" width="820" alt="실행 로그 화면" /></a><br/>
+      <b>📋 실행 로그</b><br/>
+      <sub><code>[harness]</code> 하네스 · <code>[git]</code> 브랜치/커밋/머지 · <code>[claude]</code> CLI 출력 · <code>[hook]</code> CLI 훅이 시간순으로 쌓입니다.<br/>펼치면 태스크 브랜치, trace/span ID, 변경 파일별 +/− 라인 수, 커밋 목록까지 한 화면에서 확인할 수 있습니다</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <a href="https://easyproject4-demo.pages.dev/#/sessions"><img src="docs/images/demo_sessions.png" alt="세션 화면" /></a><br/>
+      <b>🖥 세션</b><br/>
+      <sub>명령프롬프트(PTY)·Claude CLI·Antigravity CLI 세션을 띄워두고 관리. 프로젝트에 <code>session_name</code>을 지정하면 subprocess 대신 그 세션으로 프롬프트가 전달되어 대화 맥락이 유지됩니다</sub>
+    </td>
+    <td width="50%" align="center">
+      <a href="https://easyproject4-demo.pages.dev/#/plugins"><img src="docs/images/demo_plugins.png" alt="확장 화면" /></a><br/>
+      <b>🧩 확장</b><br/>
+      <sub>View 플러그인·MCP 커넥터·Claude Skill·도우미를 설치·삭제·토글. 스위치를 끄면 왼쪽 메뉴에서 즉시 사라지고, 언인스톨해도 플러그인 데이터는 보존됩니다</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <a href="https://easyproject4-demo.pages.dev/#/help"><img src="docs/images/demo_help.png" width="820" alt="도움말 화면" /></a><br/>
+      <b>❓ 도움말</b><br/>
+      <sub>사용 순서, Git 격리 방식, Bearer 토큰 인증과 REST API 엔드포인트, Claude CLI·Antigravity CLI 훅과 MCP 도구를 한곳에 정리했습니다</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img src="docs/images/demo_mobile_dashboard.png" width="230" alt="모바일 대시보드" />
+      <img src="docs/images/demo_mobile_tasks.png" width="230" alt="모바일 태스크" />
+      <img src="docs/images/demo_mobile_runlog.png" width="230" alt="모바일 실행 로그" /><br/>
+      <b>📱 모바일</b><br/>
+      <sub>같은 대시보드가 좁은 화면에 맞춰 재배치됩니다. Flutter 앱은 <code>tunnel.bat</code>의 Cloudflare 터널로 접속하며, 헤더의 📱 버튼이 서버 주소와 인증 토큰을 담은 QR을 띄웁니다</sub>
+    </td>
+  </tr>
+</table>
+
+<div align="center">
+<sub>테마는 다크·라이트·미드나잇·포레스트·선셋 5종이며 오른쪽 위 ⚙ 에서 바꿉니다. 위 캡처는 기본 다크 테마입니다.</sub>
+</div>
+
+---
 
 ## 빠른 시작
 
