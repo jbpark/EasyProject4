@@ -352,7 +352,9 @@ body.theme-light .log-box, body.theme-light .term { background: #1e293b; }
 
 /* ---------- 반응형 ---------- */
 @media (max-width: 1180px) {
-  .content-wrap { flex-direction: column; }
+  /* 세로 배치에서는 stretch 로 되돌린다. flex-start 를 유지하면 본문이 내용 너비만큼
+     늘어나 긴 코드 블록이 페이지 전체를 가로로 밀어낸다. */
+  .content-wrap { flex-direction: column; align-items: stretch; }
   .guide { width: 100%; position: static; max-height: none; }
   .grid.c4, .grid.c5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sys-grid { grid-template-columns: repeat(3, 1fr); }
@@ -366,4 +368,10 @@ body.theme-light .log-box, body.theme-light .term { background: #1e293b; }
   .grid.c2, .grid.c3 { grid-template-columns: 1fr; }
   .sys-grid { grid-template-columns: repeat(2, 1fr); }
   main { padding: 14px; }
+
+  /* 좁은 화면에서 가로 스크롤 방지 — 태그·칩·셀렉트가 뷰포트를 밀어내지 않게 한다 */
+  .task .head { flex-wrap: wrap; }
+  .filter-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+  .filter-chips button { flex-shrink: 0; }
+  #task-project { width: 100% !important; min-width: 0 !important; }
 }
