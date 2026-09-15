@@ -75,7 +75,6 @@ ep4_name.txt
 
 # 다른 PC 이전용 비추적 파일 묶음 (토큰·키·DB 포함 — 커밋 금지)
 gitignore.zip
-backup_conf.zip
 
 # tistory-post 스킬 산출물 (블로그 초안)
 output/tistory/
