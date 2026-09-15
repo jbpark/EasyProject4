@@ -16,7 +16,30 @@ tunnel.bat 8080    # 포트 직접 지정
 mobile.bat         # Flutter 앱 (Windows 데스크톱, 기본)
 mobile.bat chrome  # 특정 디바이스 지정
 desktop.bat        # Electron 데스크톱 앱 개발 모드 (서버 자동 기동 + 대시보드 창)
+backup_conf.bat    # 실행에 필요한 설정 파일만 backup_conf.zip 으로 묶기
+gitignore.bat      # 설정 + 로컬 DB 까지 gitignore.zip 으로 묶기 (데이터 포함 이전용)
 ```
+
+### 다른 호스트로 옮기기
+
+git 에 없는 설정(인증 토큰·GitHub 토큰·Firebase 키)은 `backup_conf.bat` 으로 묶어 옮긴다.
+
+```bat
+backup_conf.bat                  REM 원본 PC 에서 backup_conf.zip 생성
+```
+
+새 호스트에서는 clone 후 루트에서 풀고 바로 실행한다.
+
+```bat
+git clone https://github.com/jbpark/EasyProject4.git
+cd EasyProject4
+tar -xf backup_conf.zip          REM zip 을 루트에 복사해 둔 뒤
+run.bat
+```
+
+- 두 zip 모두 토큰·개인키를 담고 있어 `.gitignore` 처리되어 있다. 메일·클라우드로 그대로 보내지 않는다.
+- `ep4_id.txt` 는 일부러 제외한다. 호스트마다 새로 생성되어야 Firebase 터널 공유에서 서로 덮어쓰지 않는다.
+- 프로젝트·태스크 데이터까지 옮기려면 `gitignore.bat`(DB 포함)을 쓴다.
 
 데스크톱 앱 빌드(`desktop/release/ep4.exe`): `cd desktop && npm run dist` — 자세한 내용은 `desktop/README.md`.
 
