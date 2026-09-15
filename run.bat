@@ -36,6 +36,10 @@ if %errorlevel% neq 0 (
     pip install -r requirements.txt
 )
 
+REM Claude CLI 훅(~/.claude/settings.json)이 이 저장소를 가리키는지 확인하고
+REM 없거나 다른 경로면 추가·갱신한다. 실패해도 서버 기동은 계속한다.
+python ep4_run_helper.py hooks
+
 python ep4_run_helper.py port > _ep4port.tmp 2>nul
 set /p EP4_PORT=<_ep4port.tmp
 del _ep4port.tmp >nul 2>&1
