@@ -59,10 +59,19 @@ tunnel.url
 # EP4 인스턴스 식별자 (PC별 고유, 자동 생성)
 ep4_id.txt
 
-# 비공개 설정 (Firebase 서비스 계정 키, 마켓플레이스 GitHub 토큰)
+# 비공개 설정 (Firebase 서비스 계정 키, 마켓플레이스 GitHub 토큰, 인증 토큰)
+# run.bat 실행에 필요한 로컬 전용 설정 — PC 마다 값이 다르므로 커밋하지 않는다.
 conf/*adminsdk*.json
+conf/*.json
+!conf/*.example
 conf/ep4.local.conf
 conf/marketplace.conf
+conf/manager_id.txt
+conf/manager_token.txt
+conf/ep4_name.txt
+
+# EP4 인스턴스 표시 이름 (루트 배치 시)
+ep4_name.txt
 
 # 다른 PC 이전용 비추적 파일 묶음 (gitignore.bat 산출물 — 토큰·DB 포함, 커밋 금지)
 gitignore.zip

@@ -116,7 +116,8 @@ plugins/
 - 각 플러그인 폴더에는 `plugin.json`이 필수이며, View 플러그인은 `view.js`도 포함한다.
 - 백엔드 로직이 있는 플러그인은 `backend.py`를 추가한다 (`ep4_plugins.py` 훅 구현).
 - `_iter_plugin_dirs(base_dir)`가 카테고리 하위 구조와 플랫 구조를 모두 투명하게 스캔한다.
-- `dist/plugins/`는 번들드 플러그인(빌드 산출물)으로 직접 편집하지 않는다.
+- `dist/plugins/`는 앱에 내장되어 함께 배포되는 플러그인 자리다. 현재는 필수 플러그인인 `plugins`(확장 화면) 하나만 있고, `plugins/` 에는 없다. 빌드 산출물이 아니라 직접 편집하는 소스다.
+- 서버는 `plugins/` 와 `dist/plugins/` 를 **모두** 스캔한다(`INSTALLED_PLUGINS_DIR`, `PLUGINS_DIR`). 새 플러그인은 `plugins/` 아래 카테고리 폴더에 만들고, `dist/plugins/` 는 필수·내장 플러그인에만 쓴다.
 
 백엔드 플러그인 작성법과 템플릿: `docs/examples/backend_plugin/`.
 
@@ -177,7 +178,9 @@ Gemini CLI(Antigravity 엔진)도 Claude와 호환되는 훅 페이로드(`promp
 
 ## 주의 사항
 
-- `dist/`는 빌드 산출물이므로 직접 편집하지 않는다.  
+- **`dist/`는 빌드 산출물이 아니라 웹 대시보드의 소스다.** 번들러나 빌드 단계가 없고 `server.py` 가 파일을 그대로 서빙하므로, 대시보드를 고치려면 `dist/app.js` · `dist/index.html` · `dist/shell.js` · `dist/webdoc.html` 을 직접 편집한다. (`desktop/package.json` 의 `npm run dist` 는 Electron 앱 패키징이라 이 폴더와 무관하다.)
+  - `dist/app.js` — 대시보드 로직 (약 26만 자). 수정 후 `node --check dist/app.js` 로 문법을 확인한다.
+  - `dist/index.html` — 셸 마크업과 테마 CSS. `dist/mascots/` 는 마스코트 GIF 자산.  
 - `server/projects.db`는 WAL 모드 SQLite이므로 서버 실행 중에는 직접 수정을 피한다.  
 - `project_root` 경로가 설정된 프로젝트에서 태스크를 실행하면 git worktree가 자동 생성된다. git이 없는 경로이면 worktree 없이 직접 실행된다.  
 - **Firebase Realtime DB 주소(`firebase_db_url`)는 코드에 하드코딩하지 않는다.** `conf/ep4.local.conf` 에서만 읽으며(`server.py` `main()`, `ep4_firebase_push.py`, `mobile.bat` → `--dart-define=EP4_FIREBASE_DB`), 값이 없으면 터널 URL 공유 기능만 조용히 비활성화된다. 이 DB 는 인증 없이 읽히므로 주소가 공개되면 터널 URL 이 노출된다.
