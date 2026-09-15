@@ -512,11 +512,15 @@ class _ProjectEditorSheetState extends State<_ProjectEditorSheet> {
       initialChildSize: 0.85,
       maxChildSize: 0.95,
       builder: (c, scroll) => Padding(
+        // 키보드(viewInsets)와 시스템 내비게이션 바(padding)를 함께 피한다.
+        // padding 은 키보드에 가려진 만큼 0 이 되므로 더해도 중복되지 않는다.
         padding: EdgeInsets.only(
             left: 16,
             right: 16,
             top: 16,
-            bottom: MediaQuery.of(c).viewInsets.bottom + 16),
+            bottom: MediaQuery.of(c).viewInsets.bottom +
+                MediaQuery.of(c).padding.bottom +
+                16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

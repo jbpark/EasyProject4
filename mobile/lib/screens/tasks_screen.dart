@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/api_client.dart';
 import '../api/sse_client.dart';
@@ -442,7 +444,8 @@ class _TasksScreenState extends State<TasksScreen> {
           claudeSessionId: claudeSessionId,
           claudeSessions: claudeSessions,
           defaultModel: _project.model,
-          engine: (_project.raw['engine'] ?? 'claude') as String),
+          engine: (_project.raw['engine'] ?? 'claude') as String,
+          projectId: _pid),
     );
     if (result == null || !mounted) return;
     try {
@@ -465,10 +468,34 @@ class _TasksScreenState extends State<TasksScreen> {
             modelOverride: result['model'] ?? '');
       }
     } catch (e) {
-      _toast(t == null ? '추가 실패: $e' : '수정 실패: $e');
+      // 서버 등록에 실패했으면 입력 내용을 잃지 않도록 초안을 되살려 둔다
+      if (t == null) {
+        await _saveFailedDraft(result);
+        _toast('추가 실패: $e (입력 내용은 보관했습니다)');
+      } else {
+        _toast('수정 실패: $e');
+      }
       return;
     }
+    if (t == null) await _TaskEditorState.clearDraft(_pid);
     _load();
+  }
+
+  /// 서버 등록이 실패했을 때 입력 내용을 초안으로 되돌려 둔다.
+  /// (시트는 이미 닫혀 dispose 가 끝난 뒤라 여기서 다시 써 준다)
+  Future<void> _saveFailedDraft(Map<String, String> r) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+          'ep4_task_draft_$_pid',
+          jsonEncode({
+            'body': r['body'] ?? '',
+            'test': r['test'] ?? '',
+            'session': r['session'] ?? '',
+            'model': r['model'] ?? '',
+            'timeout': (r['timeout'] ?? '0') == '0' ? '' : (r['timeout'] ?? ''),
+          }));
+    } catch (_) {}
   }
 
   void _toast(String m) {
@@ -872,6 +899,9 @@ class _TaskEditor extends StatefulWidget {
   /// 프로젝트 기본 모델·엔진 — 모델 드롭다운 기본 표시/옵션 구성용.
   final String defaultModel;
   final String engine;
+
+  /// 임시 저장(초안) 키에 쓰는 프로젝트 id. 추가 시트에서만 사용한다.
+  final int projectId;
   const _TaskEditor(
       {this.task,
       this.sessionNames = const [],
@@ -879,7 +909,8 @@ class _TaskEditor extends StatefulWidget {
       this.claudeSessionId = '',
       this.claudeSessions = const [],
       this.defaultModel = '',
-      this.engine = 'claude'});
+      this.engine = 'claude',
+      this.projectId = 0});
 
   @override
   State<_TaskEditor> createState() => _TaskEditorState();
@@ -903,6 +934,95 @@ class _TaskEditorState extends State<_TaskEditor> {
       text: (widget.task?.timeoutOverride ?? 0) > 0
           ? '${widget.task!.timeoutOverride}'
           : '');
+
+  // ── 입력 중 초안 보존 ─────────────────────────────────────────────
+  // 시트를 밀어 내리거나 뒤로 가기로 닫으면 입력하던 내용이 사라진다.
+  // '추가' 시트에 한해 프로젝트별로 초안을 저장해 두고 다시 열 때 되살린다.
+  // (수정 시트는 실제 태스크 값을 덮어쓸 수 있어 대상에서 뺀다)
+  String get _draftKey => 'ep4_task_draft_${widget.projectId}';
+  bool get _draftEnabled => widget.task == null && widget.projectId > 0;
+
+  /// 정상 등록으로 닫혔는지 — true 면 dispose 에서 초안을 저장하지 않는다.
+  bool _submitted = false;
+  bool _draftRestored = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_draftEnabled) _restoreDraft();
+  }
+
+  Future<void> _restoreDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_draftKey);
+      if (raw == null || raw.isEmpty || !mounted) return;
+      final d = jsonDecode(raw);
+      if (d is! Map) return;
+      // 사용자가 이미 타이핑을 시작했다면 덮어쓰지 않는다.
+      if (_body.text.isNotEmpty || _test.text.isNotEmpty) return;
+      setState(() {
+        _body.text = (d['body'] ?? '') as String;
+        _test.text = (d['test'] ?? '') as String;
+        _timeout.text = (d['timeout'] ?? '') as String;
+        final s = (d['session'] ?? '') as String;
+        final m = (d['model'] ?? '') as String;
+        if (s.isNotEmpty) _session = s;
+        if (m.isNotEmpty) _model = m;
+        _draftRestored = true;
+      });
+    } catch (_) {
+      // 초안 복원 실패는 조용히 무시한다 (빈 시트로 시작)
+    }
+  }
+
+  /// dispose 에서 호출되므로 컨트롤러 값을 **await 전에** 모두 읽어 둔다.
+  /// (await 뒤에는 컨트롤러가 이미 해제되어 .text 접근이 예외를 던진다)
+  Future<void> _saveDraft() async {
+    final key = _draftKey;
+    final body = _body.text;
+    final test = _test.text;
+    final timeout = _timeout.text;
+    final session = _session;
+    final model = _model;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (body.trim().isEmpty && test.trim().isEmpty) {
+        await prefs.remove(key);
+        return;
+      }
+      await prefs.setString(
+          key,
+          jsonEncode({
+            'body': body,
+            'test': test,
+            'session': session,
+            'model': model,
+            'timeout': timeout,
+          }));
+    } catch (_) {
+      // 저장 실패는 조용히 무시한다
+    }
+  }
+
+  /// 등록에 성공했거나 사용자가 '지우기' 를 눌렀을 때 초안을 비운다.
+  static Future<void> clearDraft(int projectId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('ep4_task_draft_$projectId');
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    // 추가를 누르지 않고 닫힌 경우에만 초안을 남긴다.
+    if (_draftEnabled && !_submitted) _saveDraft();
+    _title.dispose();
+    _body.dispose();
+    _test.dispose();
+    _timeout.dispose();
+    super.dispose();
+  }
 
   // '기존 세션' 항목 라벨 — 태스크 실행 용도 설명과 함께 프로젝트 기본 세션이
   // 무엇인지, 실행 중인지까지 표시. 기본 세션이 없어도 태스크 전체 삭제 시
@@ -943,18 +1063,57 @@ class _TaskEditorState extends State<_TaskEditor> {
             '${_session.substring(7).padRight(8).substring(0, 8).trim()}… (목록에 없음)'),
     ];
     // 키보드가 올라오면 남는 높이가 줄어 아래 필드(모델·타임아웃)가 잘리므로
-    // 시트 내용 전체를 스크롤 가능하게 감싼다
+    // 시트 내용 전체를 스크롤 가능하게 감싼다.
+    //
+    // 아래 여백은 두 가지를 함께 피해야 한다.
+    //   viewInsets.bottom : 키보드 높이
+    //   padding.bottom    : 시스템 내비게이션 바 높이
+    // padding 은 viewInsets 에 가려진 만큼 자동으로 0 이 되므로 더해도 중복되지 않는다.
+    // (viewInsets 만 쓰면 키보드가 내려갔을 때 버튼이 내비게이션 바에 깔린다)
+    final mq = MediaQuery.of(context);
     return SingleChildScrollView(
       padding: EdgeInsets.only(
         left: 16, right: 16, top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        bottom: mq.viewInsets.bottom + mq.padding.bottom + 16,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(isEdit ? '태스크 수정' : '태스크 추가',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              Expanded(
+                child: Text(isEdit ? '태스크 수정' : '태스크 추가',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              // 이전에 쓰다 만 내용이 되살아났음을 알리고, 지울 수단을 준다
+              if (_draftRestored)
+                TextButton.icon(
+                  onPressed: () async {
+                    await _TaskEditorState.clearDraft(widget.projectId);
+                    if (!mounted) return;
+                    setState(() {
+                      _body.clear();
+                      _test.clear();
+                      _timeout.clear();
+                      _session = '';
+                      _model = '';
+                      _draftRestored = false;
+                    });
+                  },
+                  icon: const Icon(Icons.undo, size: 16),
+                  label: const Text('임시 저장 지우기',
+                      style: TextStyle(fontSize: 12)),
+                ),
+            ],
+          ),
+          if (_draftRestored)
+            const Padding(
+              padding: EdgeInsets.only(top: 2, bottom: 2),
+              child: Text('쓰다 만 내용을 불러왔습니다.',
+                  style: TextStyle(fontSize: 12, color: Colors.orange)),
+            ),
           const SizedBox(height: 14),
           // 추가 시트는 제목 입력 없이 내용 첫 줄을 제목으로 쓴다 (수정 시트만 표시)
           if (isEdit) ...[
@@ -1024,6 +1183,11 @@ class _TaskEditorState extends State<_TaskEditor> {
                   labelText: '타임아웃(초) — 비우면 프로젝트 기본값')),
           const SizedBox(height: 16),
           FilledButton(
+            // 한 손으로 누르기 쉽도록 기본(48)보다 넉넉하게 잡는다
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             onPressed: () {
               final bodyText = _body.text.trim();
               // 추가: 내용 첫 줄을 제목으로 자동 사용 / 수정: 입력된 제목 유지
@@ -1034,6 +1198,7 @@ class _TaskEditorState extends State<_TaskEditor> {
                       .map((l) => l.trim())
                       .firstWhere((l) => l.isNotEmpty, orElse: () => '');
               if (title.isEmpty) return;
+              _submitted = true;   // dispose 에서 초안을 남기지 않도록
               Navigator.pop(context, {
                 'title': title.length > 100 ? title.substring(0, 100) : title,
                 'body': bodyText,

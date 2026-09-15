@@ -592,9 +592,12 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
       context: context,
       isScrollControlled: true,
       builder: (c) => Padding(
+        // 키보드(viewInsets)와 시스템 내비게이션 바(padding)를 함께 피한다.
         padding: EdgeInsets.only(
             left: 16, right: 16, top: 16,
-            bottom: MediaQuery.of(c).viewInsets.bottom + 16),
+            bottom: MediaQuery.of(c).viewInsets.bottom +
+                MediaQuery.of(c).padding.bottom +
+                16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
