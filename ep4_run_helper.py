@@ -44,6 +44,100 @@ elif cmd == "killport":
                        capture_output=True, text=True)
         print(f"killed {pid}")
 
+elif cmd == "mcp":
+    # ~/.claude.json 의 mcpServers.ep4 가 이 저장소를 가리키는지 점검하고 없으면 추가한다.
+    # run.bat 이 서버 기동 전에 호출한다.
+    #
+    # 훅(~/.claude/settings.json)과 MCP(~/.claude.json)는 파일이 서로 다르다.
+    # 인증 토큰은 ep4_mcp.py 가 자기 옆의 conf/ep4.local.conf 에서 스스로 읽으므로
+    # 환경변수로 심지 않는다 (설정 파일에 토큰을 남기지 않기 위함).
+    import datetime
+    import pathlib
+
+    ROOT = pathlib.Path(__file__).resolve().parent
+    MCP_SCRIPT = ROOT / "ep4_mcp.py"
+    CLAUDE_JSON = pathlib.Path.home() / ".claude.json"
+
+    if not MCP_SCRIPT.is_file():
+        print(f"[EP4] {MCP_SCRIPT.name} 이 없어 MCP 설정을 건너뜁니다.")
+        sys.exit(0)
+
+    # 포트는 conf/ep4.conf 를 따른다 (기본 7788)
+    port = 7788
+    try:
+        port = int(json.loads((ROOT / "conf" / "ep4.conf").read_text(encoding="utf-8-sig"))
+                   .get("port", 7788))
+    except Exception:
+        pass
+    want_args = [str(MCP_SCRIPT)]
+    want_url = f"http://localhost:{port}"
+
+    if not CLAUDE_JSON.is_file():
+        # Claude CLI 가 한 번도 실행되지 않은 상태. 이 파일은 CLI 가 자기 상태를 담아
+        # 관리하므로 우리가 새로 만들지 않는다.
+        print(f"[EP4] {CLAUDE_JSON} 이 없어 MCP 설정을 건너뜁니다 (Claude CLI 최초 실행 후 다시 시도).")
+        sys.exit(0)
+
+    try:
+        raw = CLAUDE_JSON.read_text(encoding="utf-8-sig")
+        data = json.loads(raw)
+    except Exception as e:
+        print(f"[EP4] {CLAUDE_JSON} 을 읽을 수 없어 MCP 설정을 건너뜁니다: {e}")
+        sys.exit(0)
+    if not isinstance(data, dict):
+        print(f"[EP4] {CLAUDE_JSON} 형식이 예상과 달라 MCP 설정을 건너뜁니다.")
+        sys.exit(0)
+
+    servers = data.get("mcpServers")
+    if not isinstance(servers, dict):
+        servers = {}
+    cur = servers.get("ep4")
+    changed, action = False, ""
+
+    if not isinstance(cur, dict):
+        servers["ep4"] = {"type": "stdio", "command": "python",
+                          "args": want_args, "env": {"EP4_BASE_URL": want_url}}
+        changed, action = True, "추가"
+    else:
+        if cur.get("args") != want_args:
+            print("[EP4] MCP 서버가 다른 경로를 가리켜 갱신합니다:")
+            print(f"        이전: {cur.get('args')}")
+            print(f"        이후: {want_args}")
+            cur["args"] = want_args
+            changed, action = True, "경로 갱신"
+        env = cur.get("env")
+        if not isinstance(env, dict):
+            env = {}
+        if env.get("EP4_BASE_URL") != want_url:
+            print(f"[EP4] MCP 주소 갱신: {env.get('EP4_BASE_URL')} -> {want_url}")
+            env["EP4_BASE_URL"] = want_url
+            cur["env"] = env
+            changed = True
+            action = action or "주소 갱신"
+        cur.setdefault("type", "stdio")
+        cur.setdefault("command", "python")
+
+    if not changed:
+        print("[EP4] Claude CLI MCP 설정 정상 (변경 없음)")
+        sys.exit(0)
+
+    data["mcpServers"] = servers
+    try:
+        stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup = CLAUDE_JSON.with_name(f".claude.json.ep4bak_{stamp}")
+        backup.write_text(raw, encoding="utf-8")
+        # Claude CLI 가 이 파일을 동시에 쓸 수 있으므로 임시 파일에 쓴 뒤 교체한다.
+        tmp = CLAUDE_JSON.with_name(f".claude.json.ep4tmp_{stamp}")
+        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        os.replace(tmp, CLAUDE_JSON)
+        print(f"[EP4] 기존 설정 백업: {backup.name}")
+    except Exception as e:
+        print(f"[EP4] MCP 설정 저장 실패 (건너뜀): {e}")
+        sys.exit(0)
+
+    print(f"[EP4] Claude CLI MCP 설정 {action}: {CLAUDE_JSON}")
+    print("[EP4] 이미 떠 있는 Claude CLI 세션은 재시작해야 반영됩니다.")
+
 elif cmd == "hooks":
     # ~/.claude/settings.json 의 EP4 훅을 점검하고 없으면 추가한다.
     # run.bat 이 서버 기동 전에 호출한다. 이미 이 저장소를 가리키면 아무것도 하지 않는다.

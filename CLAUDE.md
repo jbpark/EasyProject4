@@ -154,23 +154,28 @@ plugins/
 
 훅은 EP4 서버가 없으면 조용히 종료하므로 서버가 꺼져 있어도 Claude CLI 동작에는 영향이 없다.
 
-#### 훅 자동 설정 (run.bat)
+#### 연동 설정 자동 확인 (run.bat)
 
-`run.bat` 은 서버를 띄우기 전에 `python ep4_run_helper.py hooks` 를 실행해
-`~/.claude/settings.json` 의 EP4 훅이 **이 저장소**를 가리키는지 확인한다.
+`run.bat` 은 서버를 띄우기 전에 두 설정이 **이 저장소**를 가리키는지 확인하고 보정한다.
+
+```bat
+python ep4_run_helper.py hooks    REM ~/.claude/settings.json  의 hooks
+python ep4_run_helper.py mcp      REM ~/.claude.json           의 mcpServers.ep4
+```
 
 | 상황 | 동작 |
 |------|------|
-| 훅 없음 | `UserPromptSubmit` · `Stop` 훅을 추가 |
-| 다른 EP4 설치본을 가리킴 | 실행 중인 이 저장소 경로로 갱신 (이전·이후 경로를 출력) |
+| 설정 없음 | 훅(`UserPromptSubmit`·`Stop`) / MCP 항목을 추가 |
+| 다른 EP4 설치본을 가리킴 | 실행 중인 이 저장소 경로로 갱신 (이전·이후를 출력) |
 | 이미 올바름 | 변경 없음 |
-| 사용자의 다른 훅이 같은 이벤트에 있음 | 그대로 두고 EP4 훅만 덧붙임 |
-| `settings.json` 이 손상됨 | 건드리지 않고 건너뜀 (다른 설정 유실 방지) |
+| 사용자의 다른 훅·MCP 서버가 있음 | 그대로 두고 EP4 항목만 덧붙임·수정 |
+| 대상 파일이 손상됨 | 건드리지 않고 건너뜀 (다른 설정 유실 방지) |
 
-- 변경할 때만 `settings.json.ep4bak_<시각>` 으로 백업한다.
-- 저장소를 다른 경로로 옮기거나 새 호스트에 clone 해도 `run.bat` 한 번으로 훅이 맞춰진다.
+- 변경할 때만 `settings.json.ep4bak_<시각>` · `.claude.json.ep4bak_<시각>` 으로 백업한다.
+- `~/.claude.json` 은 Claude CLI 가 자기 상태를 담아 관리하는 큰 파일이라, 임시 파일에 쓴 뒤 교체하는 방식으로 저장한다. 파일이 아직 없으면(CLI 최초 실행 전) 만들지 않고 건너뛴다.
+- MCP 의 `EP4_BASE_URL` 은 `conf/ep4.conf` 의 포트를 따른다. 인증 토큰은 `ep4_mcp.py` 가 자기 옆의 `conf/ep4.local.conf` 에서 직접 읽으므로 설정 파일에 심지 않는다.
+- 저장소를 옮기거나 새 호스트에 clone 해도 `run.bat` 한 번으로 두 설정이 맞춰진다.
 - 이미 떠 있는 Claude CLI 세션은 재시작해야 반영된다.
-- MCP 서버(`~/.claude.json`)는 자동 설정 대상이 아니다. 경로가 바뀌었으면 직접 수정한다.
 
 #### Antigravity(Gemini) CLI 훅
 
