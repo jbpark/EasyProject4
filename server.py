@@ -4781,6 +4781,10 @@ def handle_chat_stream(handler, body: dict) -> None:
 # ── Claude CLI 상태 ──────────────────────────────────────
 _cli_status_cache: dict = {"data": None, "ts": 0.0}
 
+# 서버 시작 시 _cli_auth_probe() 가 채우는 재인증 필요 판정 결과.
+# checked 전에는 대시보드가 팝업을 띄우지 않는다.
+CLI_AUTH_STATE = {"checked": False, "need_reauth": False, "reason": ""}
+
 def get_cli_status() -> dict:
     now = time.time()
     if _cli_status_cache["data"] and now - _cli_status_cache["ts"] < 30:
@@ -4816,10 +4820,58 @@ def get_cli_status() -> dict:
         "version": version,
         "connected": connected,
         "email": email,
+        "auth_checked": CLI_AUTH_STATE["checked"],
+        "need_reauth": CLI_AUTH_STATE["need_reauth"],
+        "auth_reason": CLI_AUTH_STATE["reason"],
     }
     _cli_status_cache["data"] = result
     _cli_status_cache["ts"] = now
     return result
+
+
+# 로그인 실패 판정에 쓰는 문구 조각 — claude CLI 가 인증 문제로 실패할 때
+# stdout/stderr 에 나타나는 표현들 (버전에 따라 문구가 달라 폭넓게 잡는다)
+_CLI_AUTH_ERR_HINTS = ("login", "log in", "invalid api key", "oauth",
+                       "authenticate", "authentication", "unauthorized", "expired")
+
+
+def _cli_auth_probe():
+    """서버 시작 시 Claude CLI 재인증 필요 여부를 1회 점검한다 (백그라운드).
+    토큰 파일(.credentials.json)은 CLI 버전에 따라 값이 비어 있어 신뢰할 수
+    없으므로, 로그인 계정(~/.claude.json oauthAccount) 유무를 본 뒤 실제
+    headless 호출 1회로 판정한다. 재인증이 필요하면 SSE 'cli_auth' 로
+    대시보드에 팝업을 띄우게 한다."""
+    cli = shutil.which("claude") or ""
+    need, reason = False, ""
+    try:
+        if cli:
+            if not get_cli_status().get("connected"):
+                need, reason = True, "Claude CLI 로그인 정보가 없습니다."
+            else:
+                try:
+                    proc = subprocess.run(
+                        [cli, "-p", "ok", "--output-format", "json"],
+                        capture_output=True, text=True,
+                        encoding="utf-8", errors="replace", timeout=120,
+                    )
+                    out = ((proc.stdout or "") + (proc.stderr or "")).lower()
+                    if proc.returncode != 0 and any(h in out for h in _CLI_AUTH_ERR_HINTS):
+                        need = True
+                        reason = "인증이 만료되었거나 유효하지 않습니다. 다시 로그인하세요."
+                except subprocess.TimeoutExpired:
+                    pass   # 판정 불가 (네트워크 등) — 팝업을 띄우지 않는다
+    except Exception:
+        pass
+    CLI_AUTH_STATE.update(checked=True, need_reauth=need, reason=reason)
+    _cli_status_cache["data"] = None   # /api/cli-status 캐시에 즉시 반영
+    if need:
+        # run.bat 콘솔에도 안내를 남긴다 (대시보드를 열지 않은 경우 대비)
+        try:
+            print(f"\n  [Claude CLI 재인증 필요] {reason}")
+            print("    대시보드 팝업에서 [로그인]을 누르거나, 터미널에서 claude 실행 후 /login 하세요.\n")
+        except Exception:
+            pass
+        emit("cli_auth", {"need_reauth": True, "reason": reason})
 
 
 # ── Antigravity / Gemini CLI 상태 ────────────────────────
@@ -9468,6 +9520,9 @@ class Handler(BaseHTTPRequestHandler):
                     f'start "Claude Login" cmd /k {cmd_name}',
                     shell=True,
                 )
+                # 로그인 절차를 시작했으므로 재인증 플래그를 내린다.
+                # 여전히 실패 상태라면 다음 서버 시작 시 프로브가 다시 감지한다.
+                CLI_AUTH_STATE.update(need_reauth=False, reason="")
                 _cli_status_cache["data"] = None
                 self.send_json({"ok": True, "msg": "터미널에서 로그인하세요."})
             except Exception as e:
@@ -9905,6 +9960,8 @@ def main():
     threading.Thread(target=_peer_startup_check, daemon=True).start()
     # 스킬 마켓 캐시 갱신 + 설명·SKILL.md 한국어 사전 번역 (백그라운드)
     threading.Thread(target=_skill_market_warmup, daemon=True).start()
+    # Claude CLI 재인증 필요 여부 점검 — 필요 시 대시보드에 팝업 (SSE 'cli_auth')
+    threading.Thread(target=_cli_auth_probe, daemon=True).start()
 
     # 콘솔 없이 기동(헤드리스/백그라운드)할 때는 EP4_NO_WAIT_KEY=1 로 키 대기 스레드를
     # 띄우지 않는다. run.bat(포그라운드)에서는 설정하지 않으므로 키 입력으로 종료된다.

@@ -4158,7 +4158,7 @@ function dismissRestartToast() {
 function startSSE() {
   if (es) { es.close(); }
   es = new EventSource('/api/events');
-  es.onopen = () => { setHeaderStatus(true, t('header.connected')); _checkServerRestart(); fetchTasks(); };
+  es.onopen = () => { setHeaderStatus(true, t('header.connected')); _checkServerRestart(); fetchTasks(); loadCliStatus(); };
   // 셸/플러그인으로 이벤트 포워딩 (기존 핸들러와 병행)
   ['status','task_start','task_done','tasks_changed','run_done','plugins_changed','shell_navigate','session_output','session_status'].forEach(ev => {
     es.addEventListener(ev, e => {
@@ -4173,6 +4173,12 @@ function startSSE() {
         }
       }
     });
+  });
+  es.addEventListener('cli_auth', e => {
+    // 서버가 시작 직후 재인증 필요를 감지한 경우 (대시보드가 먼저 열려 있어도 수신)
+    let d = {}; try { d = JSON.parse(e.data); } catch (_) {}
+    maybePromptCliReauth(Object.assign({installed: true}, d));
+    loadCliStatus();
   });
   es.addEventListener('status', e => {
     const d = JSON.parse(e.data);
@@ -4808,10 +4814,12 @@ async function loadCliStatus() {
   try {
     const r = await fetch('/api/cli-status');
     const d = await r.json();
-    const ok = d.installed && d.connected;
+    maybePromptCliReauth(d);
+    const needRe = !!d.need_reauth;
+    const ok = d.installed && d.connected && !needRe;
     const dotCls = ok ? 'ok' : (d.installed ? 'warn' : 'err');
     const title = ok ? t('cli.connected')
-                 : d.installed ? t('cli.disconnected')
+                 : d.installed ? (needRe ? 'Claude CLI 재인증 필요' : t('cli.disconnected'))
                  : t('cli.not_installed');
     const ver = (d.version || '').replace('Claude Code','').replace(/[()]/g,'').trim().split(/\s+/)[0] || '';
     const notInstalled = t('cli.chip.not_installed');
@@ -4834,7 +4842,7 @@ async function loadCliStatus() {
         </div>
         <div class="cli-badges">
           <span class="cli-chip ${d.installed?'ok':'err'}">${d.installed?'✓ CLI'+(ver?' '+ver:''):notInstalled}</span>
-          <span class="cli-chip ${d.connected?'ok':'err'}">${d.connected?t('cli.chip.connected'):notLoggedIn}</span>
+          <span class="cli-chip ${d.connected&&!needRe?'ok':'err'}">${d.connected&&!needRe?t('cli.chip.connected'):(needRe?'재인증 필요':notLoggedIn)}</span>
         </div>
         ${d.email?`<div class="cli-email">${esc(d.email)}</div>`:''}
         ${actions}
@@ -4842,6 +4850,18 @@ async function loadCliStatus() {
   } catch {
     document.getElementById('cli-status-wrap').innerHTML =
       `<div style="font-size:.7rem;color:var(--text-dim);margin-bottom:6px">CLI ${t('stat.error')}</div>`;
+  }
+}
+
+// 서버 시작 시 _cli_auth_probe 가 판정한 재인증 필요 상태 → 팝업 (페이지당 1회)
+let _cliReauthPrompted = false;
+async function maybePromptCliReauth(d) {
+  if (_cliReauthPrompted || !d || !d.installed || !d.need_reauth) return;
+  _cliReauthPrompted = true;
+  const msg = (d.auth_reason ? d.auth_reason + '\n' : '') +
+    'Claude CLI 재인증이 필요합니다. 지금 로그인 터미널을 열까요?';
+  if (await showConfirm(msg, {title:'Claude CLI 재인증 필요', type:'warning', ok:'로그인', cancel:'나중에'})) {
+    cliLogin();
   }
 }
 
